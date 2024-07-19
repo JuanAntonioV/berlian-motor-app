@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 // @ts-ignore
-BigInt.prototype.toJSON = function () {
-  const int = Number.parseInt(this.toString());
-  return int ?? this.toString();
-};
+// BigInt.prototype.toJSON = function () {
+//   const int = Number.parseInt(this.toString());
+//   return int ?? this.toString();
+// };
 
 export default function RootLayout({
   children,
