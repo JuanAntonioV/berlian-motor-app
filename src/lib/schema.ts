@@ -4,7 +4,6 @@ import {
   boolean,
   decimal,
   integer,
-  pgEnum,
   pgTable,
   primaryKey,
   serial,
@@ -52,13 +51,17 @@ export const userRoles = pgTable(
 );
 
 export const userRelations = relations(users, ({ many }) => ({
-  roles: many(roles),
-  permissions: many(permissions),
+  userRoles: many(userRoles),
+  userPermissions: many(userPermissions),
+  goodsReceipts: many(goodsReceipts),
+  productExpenditures: many(productExpenditures),
+  stockAdjustments: many(stockAdjustments),
+  stockTransfers: many(stockTransfers),
 }));
 
 export const roleRelations = relations(roles, ({ many }) => ({
-  users: many(users),
-  permissions: many(permissions),
+  userRoles: many(userRoles),
+  rolePermissions: many(rolePermissions),
 }));
 
 export const userRoleRelations = relations(userRoles, ({ one }) => ({
@@ -82,23 +85,19 @@ export const permissions = pgTable('permissions', {
     .$onUpdate(() => sql`now()`),
 });
 
-export const rolePermissions = pgTable(
-  'role_permissions',
-  {
-    roleId: serial('role_id')
-      .notNull()
-      .references(() => roles.id),
-    permissionId: serial('permission_id')
-      .notNull()
-      .references(() => permissions.id),
-  },
-  (t) => ({
-    pk: primaryKey({ columns: [t.roleId, t.permissionId] }),
-  })
-);
+export const rolePermissions = pgTable('role_permissions', {
+  id: serial('id').primaryKey(),
+  roleId: serial('role_id')
+    .notNull()
+    .references(() => roles.id),
+  permissionId: serial('permission_id')
+    .notNull()
+    .references(() => permissions.id),
+});
 
 export const permissionRelations = relations(permissions, ({ many }) => ({
-  roles: many(roles),
+  rolePermissions: many(rolePermissions),
+  userPermissions: many(userPermissions),
 }));
 
 export const rolePermissionRelations = relations(
