@@ -11,24 +11,8 @@ export const metadata: Metadata = {
     'Aplikasi manajemen persediaan barang pada bengkel Berlian Motor',
 };
 
-// @ts-ignore
-// BigInt.prototype.toJSON = function () {
-//   const int = Number.parseInt(this.toString());
-//   return int ?? this.toString();
-// };
-
 Settings.defaultZone = 'Asia/Jakarta';
 Settings.defaultLocale = 'id-ID';
-
-Info.monthsFormat('long', {
-  locale: 'id',
-});
-Info.monthsFormat('short', {
-  locale: 'id',
-});
-Info.weekdaysFormat('long', {
-  locale: 'id',
-});
 
 export default function RootLayout({
   children,
@@ -36,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'>
+    <html lang='id'>
       <body className={inter.className}>{children}</body>
     </html>
   );
