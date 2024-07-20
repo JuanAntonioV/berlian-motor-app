@@ -31,7 +31,6 @@ export const schemaList = [
   schema.users,
   schema.rolePermissions,
   schema.userPermissions,
-  schema.rolePermissions,
   schema.userRoles,
   schema.userStores,
   schema.brands,
