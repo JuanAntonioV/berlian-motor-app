@@ -1,4 +1,4 @@
-import { NextAuthConfig } from 'next-auth';
+import type { NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { loginSchema } from './validations';
 import { roles, userRoles, users } from './schema';
