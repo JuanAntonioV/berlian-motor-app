@@ -15,6 +15,7 @@ const config = {
   DB_NAME: process.env.DB_NAME || 'postgres',
   DB_SEED:
     process.env.APP_ENV === 'development' && process.env.DB_SEED === 'true',
+  AUTH_SECRET: process.env.AUTH_SECRET,
 };
 
 export default config;

@@ -6,9 +6,25 @@ import { useFormState } from 'react-dom';
 import Form from './Form';
 import SubmitButton from './SubmitButton';
 import { loginAction } from '@/actions/authAction';
+import FieldError from './FieldError';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import { useEffect } from 'react';
 
 export default function LoginForm() {
   const [state, action] = useFormState(loginAction, null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state?.success) {
+      toast.success('Berhasil masuk');
+      router.push('/dashboard');
+    }
+
+    if (state?.message) {
+      toast.error(state.message);
+    }
+  }, [state]);
 
   return (
     <Form action={action} id='loginForm'>
@@ -21,11 +37,10 @@ export default function LoginForm() {
           type='email'
           autoFocus
           required
+          error={!!state?.errors?.email}
         />
 
-        {state?.errors?.email && (
-          <div className='text-red-500 text-sm'>{state.errors?.email}</div>
-        )}
+        <FieldError errors={state?.errors?.email} name='Alamat email' />
       </div>
       <div className='form-group'>
         <Label htmlFor='password'>Kata sandi</Label>
@@ -35,11 +50,10 @@ export default function LoginForm() {
           placeholder='Kata sandi'
           type='password'
           required
+          error={!!state?.errors?.password}
         />
 
-        {state?.errors?.password && (
-          <div className='text-red-500 text-sm'>{state.errors?.password}</div>
-        )}
+        <FieldError errors={state?.errors?.password} name='Kata sandi' />
       </div>
 
       <div className='mt-4'>

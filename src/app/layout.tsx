@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Info, Settings } from 'luxon';
+import Provider from '@/providers/Provider';
+import { cn } from '@/lib/utils';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -21,7 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='id'>
-      <body className={inter.className}>{children}</body>
+      <body className={cn(inter.className)}>
+        <Provider>{children}</Provider>
+      </body>
     </html>
   );
 }

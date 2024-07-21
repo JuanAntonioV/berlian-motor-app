@@ -5,26 +5,17 @@ import { TSelectRoleSchema } from './lib/schema';
 
 declare module 'next-auth' {
   interface Session {
-    id: number;
-    roles: TSelectRoleSchema[];
-    roleIds: number[];
-    joinDate: Date;
+    id: string;
   }
 
   interface User {
-    id: number;
-    roles: TSelectRoleSchema[];
-    roleIds: number[];
-    joinDate: Date;
+    id: string;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
-    id: number;
+    id: string;
     qw;
-    roles: TSelectRoleSchema[];
-    roleIds: number[];
-    joinDate: Date;
   }
 }
