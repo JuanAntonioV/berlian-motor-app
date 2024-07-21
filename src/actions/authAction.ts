@@ -1,8 +1,11 @@
 'use server';
 
-import { signIn, signOut } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { comparePassword } from '@/lib/hash';
+import { users } from '@/lib/schema';
+import { createSession, deleteSession } from '@/lib/session';
 import { loginSchema } from '@/lib/validations';
-import { AuthError } from 'next-auth';
+import { eq } from 'drizzle-orm';
 
 export async function loginAction(prev: any, data: FormData) {
   const formData = Object.fromEntries(data.entries());
@@ -16,42 +19,43 @@ export async function loginAction(prev: any, data: FormData) {
   }
 
   const { email, password } = validate.data;
+  console.log('🚀 ~ loginAction ~ email, password:', email, password);
+
+  let userId = null;
 
   try {
-    const res = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, email),
     });
-    console.log('🚀 ~ loginAction ~ res:', res);
 
-    return { success: true };
-  } catch (error: any) {
-    console.log('🚀 ~ loginAction ~ error:', error);
-    if (error instanceof AuthError) {
-      if (error.cause?.err instanceof Error) {
-        return {
-          message: error.cause.err.message,
-        };
-      }
-      switch (error.type) {
-        case 'CredentialsSignin':
-          return {
-            message: 'Email atau password salah',
-          };
-        default:
-          return {
-            message: 'Terjadi kesalahan, silahkan coba lagi',
-          };
-      }
+    if (!user) {
+      return { message: 'Email atau password salah' };
     }
-    throw error;
+
+    if (!user.status) {
+      return { message: 'Akun anda tidak aktif' };
+    }
+
+    const isValid = await comparePassword(password, user.password);
+
+    if (!isValid) {
+      return { message: 'Email atau password salah' };
+    }
+
+    userId = user.id.toString();
+  } catch (err: any) {
+    return {
+      message: err.message,
+    };
   }
+
+  if (!userId) {
+    return { message: 'Email atau password salah' };
+  }
+
+  await createSession(userId);
 }
 
-export async function logoutAction(formData: FormData) {
-  await signOut({
-    redirect: true,
-    redirectTo: '/auth/login',
-  });
+export async function logoutAction() {
+  await deleteSession();
 }

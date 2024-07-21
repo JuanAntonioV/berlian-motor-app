@@ -15,7 +15,7 @@ export const pool = new Pool({
   max: 1,
 });
 
-export const db = drizzle(pool, { logger: true, schema });
+export const db = drizzle(pool, { schema });
 
 export type DB = typeof db;
 
@@ -29,9 +29,6 @@ export const schemaList = [
   schema.permissions,
   schema.roles,
   schema.users,
-  schema.authenticators,
-  schema.sessions,
-  schema.accounts,
   schema.rolePermissions,
   schema.userPermissions,
   schema.userRoles,

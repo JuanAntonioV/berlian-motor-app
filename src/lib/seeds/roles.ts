@@ -1,5 +1,5 @@
 import { DB } from '../db';
-import { TCreateRoleSchema, permissions, roles } from '../schema';
+import { permissions, rolePermissions, roles } from '../schema';
 
 export async function seed(db: DB) {
   const permissionData = await db
@@ -12,7 +12,7 @@ export async function seed(db: DB) {
     (permission) => permission.id
   );
 
-  const rolesData: TCreateRoleSchema[] = [
+  const rolesData = [
     {
       name: 'Super Admin',
       permissions: superAdminPermissions,
@@ -29,5 +29,31 @@ export async function seed(db: DB) {
     },
   ];
 
-  await db.insert(roles).values(rolesData);
+  const roleIds = await db
+    .insert(roles)
+    .values(rolesData)
+    .returning({ id: roles.id, name: roles.name });
+
+  const rolePermissionsDatas = roleIds.map((roleId) => {
+    const role = rolesData.find(
+      (role) => role.permissions.length > 0 && role.name === roleId.name
+    );
+
+    if (!role) {
+      return null;
+    }
+
+    return role.permissions.map((permissionId) => ({
+      roleId: roleId.id,
+      permissionId,
+    }));
+  });
+
+  for (const rolePermissionData of rolePermissionsDatas) {
+    if (!rolePermissionData) {
+      continue;
+    }
+
+    await db.insert(rolePermissions).values(rolePermissionData);
+  }
 }

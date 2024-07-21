@@ -1,5 +1,6 @@
 import { InferSelectModel, relations, sql } from 'drizzle-orm';
 import {
+  bigint,
   bigserial,
   boolean,
   decimal,
@@ -12,13 +13,10 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
-import type { AdapterAccountType } from 'next-auth/adapters';
 import { z } from 'zod';
 
 export const users = pgTable('users', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: bigserial('id', { mode: 'bigint' }).primaryKey(),
   name: varchar('name').notNull(),
   email: varchar('email').notNull().unique(),
   password: varchar('password').notNull(),
@@ -31,87 +29,6 @@ export const users = pgTable('users', {
     .defaultNow()
     .$onUpdate(() => sql`now()`),
 });
-
-export const accounts = pgTable(
-  'account',
-  {
-    userId: text('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    type: text('type').$type<AdapterAccountType>().notNull(),
-    provider: text('provider').notNull(),
-    providerAccountId: text('providerAccountId').notNull(),
-    refresh_token: text('refresh_token'),
-    access_token: text('access_token'),
-    expires_at: integer('expires_at'),
-    token_type: text('token_type'),
-    scope: text('scope'),
-    id_token: text('id_token'),
-    session_state: text('session_state'),
-  },
-  (account) => ({
-    compoundKey: primaryKey({
-      columns: [account.provider, account.providerAccountId],
-    }),
-  })
-);
-
-export const accountRelations = relations(accounts, ({ one }) => ({
-  user: one(users, {
-    fields: [accounts.userId],
-    references: [users.id],
-  }),
-}));
-
-export const sessions = pgTable('session', {
-  sessionToken: text('sessionToken').primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  expires: timestamp('expires', { mode: 'date' }).notNull(),
-});
-
-export const sessionRelations = relations(sessions, ({ one }) => ({
-  user: one(users, {
-    fields: [sessions.userId],
-    references: [users.id],
-  }),
-}));
-
-export const verificationTokens = pgTable(
-  'verificationToken',
-  {
-    identifier: text('identifier').notNull(),
-    token: text('token').notNull(),
-    expires: timestamp('expires', { mode: 'date' }).notNull(),
-  },
-  (verificationToken) => ({
-    compositePk: primaryKey({
-      columns: [verificationToken.identifier, verificationToken.token],
-    }),
-  })
-);
-
-export const authenticators = pgTable(
-  'authenticator',
-  {
-    credentialID: text('credentialID').notNull().unique(),
-    userId: text('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    providerAccountId: text('providerAccountId').notNull(),
-    credentialPublicKey: text('credentialPublicKey').notNull(),
-    counter: integer('counter').notNull(),
-    credentialDeviceType: text('credentialDeviceType').notNull(),
-    credentialBackedUp: boolean('credentialBackedUp').notNull(),
-    transports: text('transports'),
-  },
-  (authenticator) => ({
-    compositePK: primaryKey({
-      columns: [authenticator.userId, authenticator.credentialID],
-    }),
-  })
-);
 
 const baseUserSchema = createInsertSchema(users, {
   name: (schema) => schema.name.min(1, 'Nama tidak boleh kosong'),
@@ -154,10 +71,10 @@ export type TUpdateUserSchema = z.infer<typeof updateUserSchema>;
 export type TSelectUserSchema = InferSelectModel<typeof users>;
 
 export const userStores = pgTable('user_stores', {
-  userId: text('user_id')
+  userId: bigint('id', { mode: 'bigint' })
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  storeId: serial('store_id')
+  storeId: integer('store_id')
     .notNull()
     .references(() => stores.id, { onDelete: 'cascade' }),
 });
@@ -208,10 +125,10 @@ export type TSelectRoleSchema = InferSelectModel<typeof roles>;
 export const userRoles = pgTable(
   'user_roles',
   {
-    userId: text('user_id')
+    userId: bigint('id', { mode: 'bigint' })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    roleId: serial('role_id')
+    roleId: integer('role_id')
       .notNull()
       .references(() => roles.id, { onDelete: 'cascade' }),
   },
@@ -276,10 +193,10 @@ export type TSelectPermissionSchema = InferSelectModel<typeof permissions>;
 
 export const rolePermissions = pgTable('role_permissions', {
   id: serial('id').primaryKey(),
-  roleId: serial('role_id')
+  roleId: integer('role_id')
     .notNull()
     .references(() => roles.id, { onDelete: 'cascade' }),
-  permissionId: serial('permission_id')
+  permissionId: integer('permission_id')
     .notNull()
     .references(() => permissions.id, { onDelete: 'cascade' }),
 });
@@ -308,10 +225,10 @@ export const rolePermissionRelations = relations(
 export const userPermissions = pgTable(
   'user_permissions',
   {
-    userId: text('user_id')
+    userId: bigint('id', { mode: 'bigint' })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    permissionId: serial('permission_id')
+    permissionId: integer('permission_id')
       .notNull()
       .references(() => permissions.id, { onDelete: 'cascade' }),
   },
@@ -405,10 +322,10 @@ export const shelfs = pgTable('shelfs', {
 export const storeShelfs = pgTable(
   'store_shelfs',
   {
-    storeId: serial('store_id')
+    storeId: integer('store_id')
       .notNull()
       .references(() => stores.id, { onDelete: 'cascade' }),
-    shelfId: serial('shelf_id')
+    shelfId: integer('shelf_id')
       .notNull()
       .references(() => shelfs.id, { onDelete: 'cascade' }),
   },
@@ -519,10 +436,10 @@ export type TSelectTypeSchema = InferSelectModel<typeof types>;
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
-  brandId: serial('brand_id')
+  brandId: integer('brand_id')
     .notNull()
     .references(() => brands.id, { onDelete: 'cascade' }),
-  typesId: serial('types_id')
+  typesId: integer('types_id')
     .notNull()
     .references(() => types.id, { onDelete: 'cascade' }),
   name: varchar('name').notNull(),
@@ -597,10 +514,10 @@ export const productRelations = relations(products, ({ one }) => ({
 export const productCategories = pgTable(
   'product_categories',
   {
-    productId: serial('product_id')
+    productId: integer('product_id')
       .notNull()
       .references(() => products.id, { onDelete: 'cascade' }),
-    categoryId: serial('category_id')
+    categoryId: integer('category_id')
       .notNull()
       .references(() => categories.id, { onDelete: 'cascade' }),
   },
@@ -625,13 +542,13 @@ export const productCategoryRelations = relations(
 
 export const productStocks = pgTable('product_stocks', {
   id: serial('id').primaryKey(),
-  productId: serial('product_id')
+  productId: integer('product_id')
     .notNull()
     .references(() => products.id, { onDelete: 'cascade' }),
-  storeId: serial('store_id')
+  storeId: integer('store_id')
     .notNull()
     .references(() => stores.id, { onDelete: 'cascade' }),
-  shelfId: serial('shelf_id')
+  shelfId: integer('shelf_id')
     .notNull()
     .references(() => shelfs.id, {
       onDelete: 'cascade',
@@ -687,13 +604,13 @@ export const productStockRelations = relations(productStocks, ({ one }) => ({
 
 export const productStockLogs = pgTable('product_stock_logs', {
   id: serial('id').primaryKey(),
-  productId: serial('product_id')
+  productId: integer('product_id')
     .notNull()
     .references(() => products.id),
-  storeId: serial('store_id')
+  storeId: integer('store_id')
     .notNull()
     .references(() => stores.id),
-  shelfId: serial('shelf_id')
+  shelfId: integer('shelf_id')
     .notNull()
     .references(() => shelfs.id),
   stockBefore: integer('stock_before').notNull().default(0),
@@ -759,34 +676,44 @@ export type TCreateSupplierSchema = z.infer<typeof createSupplierSchema>;
 export type TUpdateSupplierSchema = z.infer<typeof updateSupplierSchema>;
 export type TSelectSupplierSchema = InferSelectModel<typeof suppliers>;
 
-export const goodsReceipts = pgTable('goods_receipts', {
-  id: varchar('id', { length: 36 }).primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  supplierId: serial('supplier_id')
-    .notNull()
-    .references(() => suppliers.id),
-  shelfId: serial('shelf_id')
-    .notNull()
-    .references(() => shelfs.id),
-  goodsReceiptDate: timestamp('goods_receipt_date', {
-    mode: 'date',
-  }).defaultNow(),
-  notes: varchar('notes'),
-  attachment: varchar('attachment'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => sql`now()`),
-});
+export const goodsReceipts = pgTable(
+  'goods_receipts',
+  {
+    id: bigserial('id', { mode: 'bigint' }),
+    invoiceNumber: varchar('invoice_number', { length: 36 }).notNull().unique(),
+    userId: bigint('id', { mode: 'bigint' })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    supplierId: integer('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, { onDelete: 'cascade' }),
+    shelfId: integer('shelf_id')
+      .notNull()
+      .references(() => shelfs.id, { onDelete: 'cascade' }),
+    goodsReceiptDate: timestamp('goods_receipt_date', {
+      mode: 'date',
+    }).defaultNow(),
+    notes: varchar('notes'),
+    attachment: varchar('attachment'),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.id] }),
+  })
+);
 
 const baseGoodsReceiptSchema = createInsertSchema(goodsReceipts, {
-  userId: (schema) => schema.userId.min(1, 'User tidak boleh kosong'),
+  invoiceNumber: (schema) =>
+    schema.invoiceNumber.min(1, 'ID tidak boleh kosong'),
+  userId: (schema) => schema.userId.min(BigInt(1), 'User tidak boleh kosong'),
   supplierId: (schema) =>
     schema.supplierId.min(1, 'Supplier tidak boleh kosong'),
   shelfId: (schema) => schema.shelfId.min(1, 'Rak tidak boleh kosong'),
 }).pick({
+  invoiceNumber: true,
   userId: true,
   supplierId: true,
   shelfId: true,
@@ -807,7 +734,7 @@ export const createGoodsReceiptSchema = z.object({
 });
 
 export const updateGoodsReceiptSchema = z.object({
-  id: z.string(),
+  id: z.number().int().positive(),
   ...baseGoodsReceiptSchema.shape,
   items: z.array(
     z.object({
@@ -829,13 +756,13 @@ export type TSelectGoodsReceiptSchema = InferSelectModel<typeof goodsReceipts>;
 
 export const goodsReceiptItems = pgTable('goods_receipt_items', {
   id: serial('id').primaryKey(),
-  goodsReceiptId: varchar('goods_receipt_id', { length: 36 })
+  goodsReceiptId: bigint('goods_receipt_id', { mode: 'bigint' })
     .notNull()
-    .references(() => goodsReceipts.id),
-  productId: serial('product_id')
+    .references(() => goodsReceipts.id, { onDelete: 'cascade' }),
+  productId: integer('product_id')
     .notNull()
-    .references(() => products.id),
-  quantity: integer('quantity').notNull(),
+    .references(() => products.id, { onDelete: 'cascade' }),
+  quantity: integer('quantity').notNull().default(0),
   price: decimal('price', { scale: 0 }).notNull(),
   total: decimal('total', { scale: 0 }).notNull(),
   createdAt: timestamp('created_at').defaultNow(),
@@ -874,37 +801,44 @@ export const goodsReceiptItemRelations = relations(
   })
 );
 
-export const stockTransfers = pgTable('stock_transfers', {
-  id: varchar('id', { length: 36 }).primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  fromStoreId: serial('from_store_id')
-    .notNull()
-    .references(() => stores.id, { onDelete: 'cascade' }),
-  toStoreId: serial('to_store_id')
-    .notNull()
-    .references(() => stores.id, { onDelete: 'cascade' }),
-  fromShelfId: serial('from_shelf_id')
-    .notNull()
-    .references(() => shelfs.id, { onDelete: 'cascade' }),
-  toShelfId: serial('to_shelf_id')
-    .notNull()
-    .references(() => shelfs.id, { onDelete: 'cascade' }),
-  attachment: varchar('attachment'),
-  status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
-  notes: varchar('notes'),
-  transferDate: timestamp('transfer_date', {
-    mode: 'date',
-  }).defaultNow(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => sql`now()`),
-});
+export const stockTransfers = pgTable(
+  'stock_transfers',
+  {
+    id: bigserial('id', { mode: 'bigint' }),
+    invoiceNumber: varchar('invoice_number', { length: 36 }).notNull().unique(),
+    userId: bigint('id', { mode: 'bigint' })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    fromStoreId: integer('from_store_id')
+      .notNull()
+      .references(() => stores.id, { onDelete: 'cascade' }),
+    toStoreId: integer('to_store_id')
+      .notNull()
+      .references(() => stores.id, { onDelete: 'cascade' }),
+    fromShelfId: integer('from_shelf_id')
+      .notNull()
+      .references(() => shelfs.id, { onDelete: 'cascade' }),
+    toShelfId: integer('to_shelf_id')
+      .notNull()
+      .references(() => shelfs.id, { onDelete: 'cascade' }),
+    attachment: varchar('attachment'),
+    status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
+    notes: varchar('notes'),
+    transferDate: timestamp('transfer_date', {
+      mode: 'date',
+    }).defaultNow(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.id] }),
+  })
+);
 
 const baseStockTransferSchema = createInsertSchema(stockTransfers, {
-  userId: (schema) => schema.userId.min(1, 'User tidak boleh kosong'),
+  userId: (schema) => schema.userId.min(BigInt(1), 'User tidak boleh kosong'),
   fromStoreId: (schema) =>
     schema.fromStoreId.min(1, 'Toko asal tidak boleh kosong'),
   toStoreId: (schema) =>
@@ -935,7 +869,7 @@ export const createStockTransferSchema = z.object({
 });
 
 export const updateStockTransferSchema = z.object({
-  id: z.string(),
+  id: z.number().int().positive(),
   ...baseStockTransferSchema.shape,
   items: z.array(
     z.object({
@@ -958,10 +892,10 @@ export type TSelectStockTransferSchema = InferSelectModel<
 
 export const stockTransferItems = pgTable('stock_transfer_items', {
   id: serial('id').primaryKey(),
-  stockTransferId: varchar('stock_transfer_id', { length: 36 })
+  stockTransferId: bigint('stock_transfer_id', { mode: 'bigint' })
     .notNull()
     .references(() => stockTransfers.id, { onDelete: 'cascade' }),
-  productId: serial('product_id')
+  productId: integer('product_id')
     .notNull()
     .references(() => products.id, { onDelete: 'cascade' }),
   quantity: integer('quantity').notNull(),
@@ -1012,28 +946,35 @@ export const stockTransferItemRelations = relations(
 
 // pengeluaran barang
 
-export const productExpenditures = pgTable('product_expenditures', {
-  id: varchar('id', { length: 36 }).primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  shelfId: serial('shelf_id')
-    .notNull()
-    .references(() => shelfs.id, { onDelete: 'cascade' }),
-  attachment: varchar('attachment'),
-  notes: varchar('notes'),
-  status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
-  expenditureDate: timestamp('expenditure_date', {
-    mode: 'date',
-  }).defaultNow(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => sql`now()`),
-});
+export const productExpenditures = pgTable(
+  'product_expenditures',
+  {
+    id: bigserial('id', { mode: 'bigint' }),
+    invoiceNumber: varchar('invoice_number', { length: 36 }).notNull().unique(),
+    userId: bigint('id', { mode: 'bigint' })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    shelfId: integer('shelf_id')
+      .notNull()
+      .references(() => shelfs.id, { onDelete: 'cascade' }),
+    attachment: varchar('attachment'),
+    notes: varchar('notes'),
+    status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
+    expenditureDate: timestamp('expenditure_date', {
+      mode: 'date',
+    }).defaultNow(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.id] }),
+  })
+);
 
 const baseProductExpenditureSchema = createInsertSchema(productExpenditures, {
-  userId: (schema) => schema.userId.min(1, 'User tidak boleh kosong'),
+  userId: (schema) => schema.userId.min(BigInt(1), 'User tidak boleh kosong'),
   shelfId: (schema) => schema.shelfId.min(1, 'Rak tidak boleh kosong'),
 }).pick({
   userId: true,
@@ -1054,7 +995,7 @@ export const createProductExpenditureSchema = z.object({
 });
 
 export const updateProductExpenditureSchema = z.object({
-  id: z.string(),
+  id: z.number().int().positive(),
   ...baseProductExpenditureSchema.shape,
   items: z.array(
     z.object({
@@ -1077,10 +1018,10 @@ export type TSelectProductExpenditureSchema = InferSelectModel<
 
 export const productExpenditureItems = pgTable('product_expenditure_items', {
   id: serial('id').primaryKey(),
-  productExpenditureId: varchar('product_expenditure_id', { length: 36 })
+  productExpenditureId: bigint('product_expenditure_id', { mode: 'bigint' })
     .notNull()
     .references(() => productExpenditures.id, { onDelete: 'cascade' }),
-  productId: serial('product_id')
+  productId: integer('product_id')
     .notNull()
     .references(() => products.id, { onDelete: 'cascade' }),
   quantity: integer('quantity').notNull(),
@@ -1114,27 +1055,34 @@ export const productExpenditureItemRelations = relations(
 );
 
 // penyesuaian stok
-export const stockAdjustments = pgTable('stock_adjustments', {
-  id: varchar('id', { length: 36 }).primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  shelfId: serial('shelf_id')
-    .notNull()
-    .references(() => shelfs.id, { onDelete: 'cascade' }),
-  notes: varchar('notes'),
-  status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
-  adjustmentDate: timestamp('adjustment_date', {
-    mode: 'date',
-  }).defaultNow(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => sql`now()`),
-});
+export const stockAdjustments = pgTable(
+  'stock_adjustments',
+  {
+    id: bigserial('id', { mode: 'bigint' }),
+    invoiceNumber: varchar('invoice_number', { length: 36 }).notNull().unique(),
+    userId: bigint('id', { mode: 'bigint' })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    shelfId: integer('shelf_id')
+      .notNull()
+      .references(() => shelfs.id, { onDelete: 'cascade' }),
+    notes: varchar('notes'),
+    status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
+    adjustmentDate: timestamp('adjustment_date', {
+      mode: 'date',
+    }).defaultNow(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => sql`now()`),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.id] }),
+  })
+);
 
 const baseStockAdjustmentSchema = createInsertSchema(stockAdjustments, {
-  userId: (schema) => schema.userId.min(1, 'User tidak boleh kosong'),
+  userId: (schema) => schema.userId.min(BigInt(1), 'User tidak boleh kosong'),
   shelfId: (schema) => schema.shelfId.min(1, 'Rak tidak boleh kosong'),
 }).pick({
   userId: true,
@@ -1154,7 +1102,7 @@ export const createStockAdjustmentSchema = z.object({
 });
 
 export const updateStockAdjustmentSchema = z.object({
-  id: z.string(),
+  id: z.number().int().positive(),
   ...baseStockAdjustmentSchema.shape,
   items: z.array(
     z.object({
@@ -1177,10 +1125,10 @@ export type TSelectStockAdjustmentSchema = InferSelectModel<
 
 export const stockAdjustmentItems = pgTable('stock_adjustment_items', {
   id: serial('id').primaryKey(),
-  stockAdjustmentId: varchar('stock_adjustment_id', { length: 36 })
+  stockAdjustmentId: bigint('stock_adjustment_id', { mode: 'bigint' })
     .notNull()
     .references(() => stockAdjustments.id),
-  productId: serial('product_id')
+  productId: integer('product_id')
     .notNull()
     .references(() => products.id, { onDelete: 'cascade' }),
   quantity: integer('quantity').notNull(),

@@ -13,6 +13,12 @@ export const metadata: Metadata = {
     'Aplikasi manajemen persediaan barang pada bengkel Berlian Motor',
 };
 
+// @ts-ignore
+BigInt.prototype.toJSON = function () {
+  const int = Number.parseInt(this.toString());
+  return int ?? this.toString();
+};
+
 Settings.defaultZone = 'Asia/Jakarta';
 Settings.defaultLocale = 'id-ID';
 

@@ -1,13 +1,12 @@
 import SignOutButton from '@/components/SignOutButton';
-import { auth } from '@/lib/auth';
+import { getUser } from '@/getters/userGetter';
 
 export default async function DashboardPage() {
-  const session = await auth();
-  console.log('🚀 ~ DashboardPage ~ session:', session);
+  const user = await getUser();
 
   return (
     <div>
-      <pre>{JSON.stringify(session, null, 2)}</pre>
+      <pre>{JSON.stringify(user, null, 2)}</pre>
       <SignOutButton />
     </div>
   );

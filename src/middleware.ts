@@ -1,36 +1,25 @@
-import NextAuth from 'next-auth';
-import authConfig from './lib/authConfig';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { protectedRoutes, unprotectedRoutes } from './constants';
+import { cookies } from 'next/headers';
+import { decrypt } from './lib/session';
 
-const { auth } = NextAuth(authConfig);
-
-const protectedRoutes = [
-  '/',
-  '/dashboard',
-  '/akun-saya',
-  '/kelola-karyawan',
-  '/kelola-kategori',
-  '/kelola-merek',
-  '/kelola-produk',
-  '/kelola-rak',
-];
-
-const unprotectedRoutes = ['/auth/login'];
-
-async function middleware(req: any) {
-  const { auth, nextUrl } = req;
-
-  const user = auth?.user;
+export default async function middleware(req: NextRequest) {
+  const { nextUrl } = req;
 
   const isProtectedRoute = protectedRoutes.some((prefix) =>
     nextUrl.pathname.startsWith(prefix)
   );
 
-  if (!user && isProtectedRoute) {
+  const cookie = cookies().get('session')?.value as string;
+  const session = await decrypt(cookie);
+  const isAuth = session?.userId;
+
+  if (isProtectedRoute && !isAuth) {
     const absoluteURL = new URL('/auth/login', nextUrl.origin);
     return NextResponse.rewrite(absoluteURL.toString());
   }
-  if (user && unprotectedRoutes.includes(nextUrl.pathname)) {
+
+  if (unprotectedRoutes.includes(nextUrl.pathname) && isAuth) {
     const absoluteURL = new URL('/dashboard', nextUrl.origin);
     return NextResponse.redirect(absoluteURL.toString());
   }
@@ -41,5 +30,3 @@ async function middleware(req: any) {
 export const config = {
   matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 };
-
-export default auth(middleware);
