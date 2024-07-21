@@ -1,3 +1,4 @@
+import exp from 'constants';
 import { InferSelectModel, relations, sql } from 'drizzle-orm';
 import {
   bigserial,
@@ -7,25 +8,81 @@ import {
   pgTable,
   primaryKey,
   serial,
+  text,
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
+import { AdapterAccountType } from 'next-auth/adapters';
 import { z } from 'zod';
 
 export const users = pgTable('users', {
   id: bigserial('id', { mode: 'bigint' }).primaryKey(),
   name: varchar('name').notNull(),
   email: varchar('email'),
-  password: varchar('password'),
+  password: varchar('password').notNull(),
   status: boolean('status').notNull().default(true),
-  joinDate: timestamp('join_date').defaultNow(),
-  avatar: varchar('avatar'),
+  joinDate: timestamp('join_date', { mode: 'date' }).defaultNow(),
+  emailVerified: timestamp('emailVerified', { mode: 'date' }),
+  image: text('image'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
     .$onUpdate(() => sql`now()`),
 });
+
+export const accounts = pgTable(
+  'account',
+  {
+    userId: bigserial('userId', { mode: 'bigint' })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: text('type').$type<AdapterAccountType>().notNull(),
+    provider: text('provider').notNull(),
+    providerAccountId: text('providerAccountId').notNull(),
+    refresh_token: text('refresh_token'),
+    access_token: text('access_token'),
+    expires_at: integer('expires_at'),
+    token_type: text('token_type'),
+    scope: text('scope'),
+    id_token: text('id_token'),
+    session_state: text('session_state'),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  })
+);
+
+export const sessions = pgTable('session', {
+  sessionToken: text('sessionToken').primaryKey(),
+  userId: bigserial('userId', { mode: 'bigint' })
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expires: timestamp('expires', { mode: 'date' }).notNull(),
+});
+
+export const authenticators = pgTable(
+  'authenticator',
+  {
+    credentialID: text('credentialID').notNull().unique(),
+    userId: bigserial('userId', { mode: 'bigint' })
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    providerAccountId: text('providerAccountId').notNull(),
+    credentialPublicKey: text('credentialPublicKey').notNull(),
+    counter: integer('counter').notNull(),
+    credentialDeviceType: text('credentialDeviceType').notNull(),
+    credentialBackedUp: boolean('credentialBackedUp').notNull(),
+    transports: text('transports'),
+  },
+  (authenticator) => ({
+    compositePK: primaryKey({
+      columns: [authenticator.userId, authenticator.credentialID],
+    }),
+  })
+);
 
 const baseUserSchema = createInsertSchema(users, {
   name: (schema) => schema.name.min(1, 'Nama tidak boleh kosong'),
@@ -678,7 +735,9 @@ export const goodsReceipts = pgTable('goods_receipts', {
   shelfId: serial('shelf_id')
     .notNull()
     .references(() => shelfs.id),
-  goodsReceiptDate: timestamp('goods_receipt_date').defaultNow(),
+  goodsReceiptDate: timestamp('goods_receipt_date', {
+    mode: 'date',
+  }).defaultNow(),
   notes: varchar('notes'),
   attachment: varchar('attachment'),
   createdAt: timestamp('created_at').defaultNow(),
@@ -800,7 +859,13 @@ export const stockTransfers = pgTable('stock_transfers', {
   attachment: varchar('attachment'),
   status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
   notes: varchar('notes'),
+  transferDate: timestamp('transfer_date', {
+    mode: 'date',
+  }).defaultNow(),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => sql`now()`),
 });
 
 const baseStockTransferSchema = createInsertSchema(stockTransfers, {
@@ -923,7 +988,13 @@ export const productExpenditures = pgTable('product_expenditures', {
   attachment: varchar('attachment'),
   notes: varchar('notes'),
   status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
+  expenditureDate: timestamp('expenditure_date', {
+    mode: 'date',
+  }).defaultNow(),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => sql`now()`),
 });
 
 const baseProductExpenditureSchema = createInsertSchema(productExpenditures, {
@@ -1018,7 +1089,13 @@ export const stockAdjustments = pgTable('stock_adjustments', {
     .references(() => shelfs.id),
   notes: varchar('notes'),
   status: integer('status').notNull().default(0), // 0: pending, 1: approved, 2: rejected
+  adjustmentDate: timestamp('adjustment_date', {
+    mode: 'date',
+  }).defaultNow(),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => sql`now()`),
 });
 
 const baseStockAdjustmentSchema = createInsertSchema(stockAdjustments, {
