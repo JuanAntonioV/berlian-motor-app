@@ -12,13 +12,13 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
-import { AdapterAccountType } from 'next-auth/adapters';
+import type { AdapterAccountType } from 'next-auth/adapters';
 import { z } from 'zod';
 
 export const users = pgTable('users', {
   id: text('id')
     .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+    .default(sql`gen_random_uuid()`),
   name: varchar('name').notNull(),
   email: varchar('email').notNull().unique(),
   password: varchar('password').notNull(),
@@ -35,7 +35,7 @@ export const users = pgTable('users', {
 export const accounts = pgTable(
   'account',
   {
-    userId: text('userId')
+    userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     type: text('type').$type<AdapterAccountType>().notNull(),
@@ -56,13 +56,27 @@ export const accounts = pgTable(
   })
 );
 
+export const accountRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.userId],
+    references: [users.id],
+  }),
+}));
+
 export const sessions = pgTable('session', {
   sessionToken: text('sessionToken').primaryKey(),
-  userId: text('userId')
+  userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   expires: timestamp('expires', { mode: 'date' }).notNull(),
 });
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.userId],
+    references: [users.id],
+  }),
+}));
 
 export const verificationTokens = pgTable(
   'verificationToken',
@@ -82,7 +96,7 @@ export const authenticators = pgTable(
   'authenticator',
   {
     credentialID: text('credentialID').notNull().unique(),
-    userId: text('userId')
+    userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     providerAccountId: text('providerAccountId').notNull(),
@@ -214,9 +228,6 @@ export const userRelations = relations(users, ({ many, one }) => ({
   productExpenditures: many(productExpenditures),
   stockAdjustments: many(stockAdjustments),
   stockTransfers: many(stockTransfers),
-  authenticators: many(authenticators),
-  sessions: many(sessions),
-  account: one(accounts),
 }));
 
 export const roleRelations = relations(roles, ({ many }) => ({
