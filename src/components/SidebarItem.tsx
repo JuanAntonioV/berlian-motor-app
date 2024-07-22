@@ -12,9 +12,10 @@ import { Badge } from './ui/badge';
 
 type Props = {
   item: TMenu;
+  closeSidebar?: () => void;
 };
 
-export default function SidebarItem({ item }: Props) {
+export default function SidebarItem({ item, closeSidebar }: Props) {
   const [open, setOpen] = useState(false);
 
   const pathname = usePathname();
@@ -53,6 +54,7 @@ export default function SidebarItem({ item }: Props) {
         <Link
           href={item.href}
           className='w-full rounded-lg py-2 px-4 flexBetween gap-2 group'
+          onClick={closeSidebar}
         >
           <div className='flex items-center gap-3 group-hover:translate-x-1 duration-200 text-gray-900'>
             {item.icon}
@@ -64,7 +66,7 @@ export default function SidebarItem({ item }: Props) {
       {open && item.subMenus && (
         <ul className='my-2'>
           {item.subMenus.map((subItem) => (
-            <li key={subItem.label}>
+            <li key={subItem.label} onClick={closeSidebar}>
               <SidebarSubItem item={subItem} />
             </li>
           ))}

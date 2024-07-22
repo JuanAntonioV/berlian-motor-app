@@ -10,7 +10,7 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
         <main className='w-full'>
           <Header />
 
-          <main className='h-[calc(100vh-114px)] overflow-auto w-full'>
+          <main className='h-[calc(100vh-114px)] overflow-auto w-full py-7 px-4 md:px-10'>
             {children}
           </main>
         </main>

@@ -9,12 +9,13 @@ import {
   CommandList,
   CommandSeparator,
 } from './ui/command';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUsers } from '@/hooks/useUsers';
-import { menuLists } from './Sidebar';
+
 import { TMenu } from '@/types';
 import { TbLayoutDashboard } from 'react-icons/tb';
+import { menuLists } from './Sidebar';
 
 export default function MenuSearch() {
   const { user, loading } = useUsers();
@@ -22,20 +23,16 @@ export default function MenuSearch() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
+  // menu lists is array of TMenu
+  const dashboard = {
+    label: 'Dashboard',
+    href: '/dashboard',
+    badge: 'New',
+    icon: <TbLayoutDashboard size={22} />,
+  };
+
   // add dashboard menu to the list
-  const appMenus: TMenu[] = useMemo(
-    () =>
-      [
-        {
-          label: 'Dashboard',
-          href: '/dashboard',
-          badge: 'New',
-          icon: <TbLayoutDashboard size={22} />,
-        },
-        ...menuLists,
-      ] as TMenu[],
-    []
-  );
+  const appMenus: TMenu[] = [dashboard, ...menuLists];
 
   function handleSelect(type: string, label: string) {
     const selected = appMenus.find((menu) => {

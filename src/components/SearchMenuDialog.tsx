@@ -17,7 +17,7 @@ import { TMenu } from '@/types';
 import { menuLists } from './Sidebar';
 
 export default function SearchMenuDialog() {
-  const { user } = useUsers();
+  const { user, loading } = useUsers();
   const permissions = user?.permissions;
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -65,7 +65,7 @@ export default function SearchMenuDialog() {
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder='Cari menu...' />
+      <CommandInput placeholder='Cari menu...' disabled={loading} />
       <CommandList>
         <CommandEmpty>Menu tidak ditemukan</CommandEmpty>
         {appMenus

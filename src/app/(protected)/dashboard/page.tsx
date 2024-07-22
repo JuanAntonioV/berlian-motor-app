@@ -1,13 +1,12 @@
-import SignOutButton from '@/components/SignOutButton';
-import { getUser } from '@/getters/userGetter';
+import PageTitle from '@/components/PageTitle';
 
 export default async function DashboardPage() {
-  const user = await getUser();
-
   return (
     <div>
-      <pre>{JSON.stringify(user, null, 2)}</pre>
-      <SignOutButton />
+      <PageTitle
+        title='Dashboard'
+        description='Lihat statistik dan data penting lainnya di sini.'
+      />
     </div>
   );
 }
