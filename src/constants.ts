@@ -1,3 +1,5 @@
+import { TMenu } from './types';
+
 export const protectedRoutes = [
   '/',
   '/dashboard',

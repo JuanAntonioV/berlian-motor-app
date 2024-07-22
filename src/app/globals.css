@@ -88,4 +88,31 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background: #f1f1f1;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 100vh;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+  }
+
+  hr {
+    @apply border-0 border-t border-solid border-gray-300 hover:!border-inherit hover:outline-none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

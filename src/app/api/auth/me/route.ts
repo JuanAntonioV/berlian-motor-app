@@ -1,14 +1,13 @@
 import { getUser } from '@/getters/userGetter';
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest } from 'next';
+import { NextResponse } from 'next/server';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export async function GET(req: NextApiRequest) {
   const user = await getUser();
 
   if (!user) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return NextResponse.json({ message: 'Unauthorized' });
   }
-  return res.status(200).json({ user });
+
+  return NextResponse.json(user);
 }

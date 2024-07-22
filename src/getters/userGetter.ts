@@ -62,12 +62,11 @@ export const getUser = cache(async () => {
       (rolePermission) => rolePermission.permission.id
     )
   );
-  console.log('🚀 ~ getUser ~ userRoleIds:', userRoleIds);
 
   // make unique
   const uniqueRolePermissionIds = Array.from(new Set(rolePermissionIds.flat()));
 
-  const userPermissions = await db.query.userPermissions.findMany({
+  const directPermissions = await db.query.userPermissions.findMany({
     where: eq(users.id, user.id),
     with: {
       permission: {
@@ -79,8 +78,25 @@ export const getUser = cache(async () => {
     },
   });
 
-  const userDirectPermissionIds = userPermissions.map(
-    (userPermission) => userPermission.permission.id
+  const userDirectPermissionIds = directPermissions.map(
+    (directPermission) => directPermission.permission.id
+  );
+
+  const uniqueRolePermission = userRoles
+    .map((userRole) => {
+      return userRole.role.rolePermissions.map(
+        (rolePermission) => rolePermission.permission.name
+      );
+    })
+    .flat();
+
+  const userPermissions = Array.from(
+    new Set([
+      ...directPermissions.map(
+        (directPermission) => directPermission.permission
+      ),
+      ...uniqueRolePermission,
+    ])
   );
 
   // merge direct and role permissions and make unique
