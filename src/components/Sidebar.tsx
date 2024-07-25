@@ -11,6 +11,11 @@ import BrandLogo from './BrandLogo';
 
 export const menuLists: TMenu[] = [
   {
+    label: 'Kelola Produk',
+    href: '/kelola-produk',
+    icon: <AiOutlineProduct size={24} />,
+  },
+  {
     label: 'Karyawan',
     href: '/kelola-karyawan',
     icon: <LuUsers2 size={22} />,
@@ -30,15 +35,18 @@ export const menuLists: TMenu[] = [
     ],
   },
   {
-    label: 'Produk',
-    href: '/kelola-produk',
-    icon: <AiOutlineProduct size={24} />,
-  },
-  {
     label: 'Manajemen',
     href: '/manajemen',
     icon: <RiFolderSettingsLine size={22} />,
     subMenus: [
+      {
+        label: 'Kelola Rak',
+        href: '/kelola-rak',
+      },
+      {
+        label: 'Kelola Merek',
+        href: '/kelola-merek',
+      },
       {
         label: 'Kelola Tipe',
         href: '/kelola-tipe',

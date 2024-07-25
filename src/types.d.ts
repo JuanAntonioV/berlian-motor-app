@@ -36,7 +36,7 @@ export type TSearchParamsData = {
 export type TStatItem = {
   id: string;
   name: string;
-  value: number;
+  value: number | string;
   description: string;
   type: 'currency' | 'number' | 'date';
 };
